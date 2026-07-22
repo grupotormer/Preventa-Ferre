@@ -684,6 +684,9 @@ async function submitPreventa() {
     // 2. Add Detalle Preventa Items
     const detalleRes = await addTableRow('DETALLE_PREVENTA', detalleRows);
 
+    // 3. Force AppSheet to recalculate formulas by Editing the parent row
+    await editTableRow('Preventa', [{ IDTransacion: transactionId }]);
+
     showToast(`¡Preventa ${transactionId} procesada con éxito!`, 'success');
     
     // Reset state & Clear cart
@@ -722,6 +725,33 @@ async function addTableRow(tableName, rowsArray) {
 
   if (!response.ok) {
     throw new Error(`HTTP error! Status: ${response.status} adding rows to table ${tableName}`);
+  }
+
+  const data = await response.json();
+  return data;
+}
+
+// Send POST to AppSheet Edit API Action
+async function editTableRow(tableName, rowsArray) {
+  const url = `${baseUrl}/${encodeURIComponent(tableName)}/Action`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'ApplicationAccessKey': accessKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      Action: 'Edit',
+      Properties: {
+        Locale: 'en-US'
+      },
+      Rows: rowsArray
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status} editing rows in table ${tableName}`);
   }
 
   const data = await response.json();
