@@ -215,7 +215,7 @@ async function fetchTableData(tableName) {
     body: JSON.stringify({
       Action: 'Find',
       Properties: {
-        Locale: 'es-ES'
+        Locale: 'en-US'
       },
       Rows: []
     })
@@ -694,7 +694,7 @@ async function addTableRow(tableName, rowsArray) {
     body: JSON.stringify({
       Action: 'Add',
       Properties: {
-        Locale: 'es-ES'
+        Locale: 'en-US'
       },
       Rows: rowsArray
     })
