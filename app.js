@@ -575,17 +575,37 @@ function updateSubmitButtonState() {
 }
 
 // Helper to generate transaction ID matching standard format: e.g., 2026-01-M1P505-XXXXX
-function generateTransactionId() {
+async function generateTransactionId() {
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
   
-  // Custom prefix matching TormerSystem samples (e.g., 2026-01-M1P505-354)
+  // Custom prefix matching TormerSystem samples (e.g., 2026-01-M1P505)
   const prefix = `${year}-${month}-M1P505`;
-  const randNum = Math.floor(1000 + Math.random() * 9000); // 4-digit unique
-  
-  return `${prefix}-${randNum}`;
+
+  try {
+    const preventas = await fetchTableData('Preventa');
+    let maxNum = 0;
+    if (Array.isArray(preventas)) {
+      preventas.forEach(row => {
+        const id = row.IDTransacion || row.IDTransaccion || '';
+        const parts = id.split('-');
+        if (parts.length > 0) {
+          const lastPart = parts[parts.length - 1];
+          const num = parseInt(lastPart, 10);
+          if (!isNaN(num) && num > maxNum) {
+            maxNum = num;
+          }
+        }
+      });
+    }
+    const nextNum = maxNum + 1;
+    return `${prefix}-${nextNum}`;
+  } catch (err) {
+    console.error('Error generating correlative ID, falling back to random:', err);
+    const randNum = Math.floor(1000 + Math.random() * 9000); // 4-digit unique
+    return `${prefix}-${randNum}`;
+  }
 }
 
 // Helper to generate Detalle UUID/hash
@@ -614,7 +634,7 @@ async function submitPreventa() {
 
   showLoading('Procesando Preventa', 'Enviando información del pedido a AppSheet...');
 
-  const transactionId = generateTransactionId();
+  const transactionId = await generateTransactionId();
   const dateFormatted = formatAppSheetDate(new Date());
   const notasText = preventaNotas.value.trim();
 
